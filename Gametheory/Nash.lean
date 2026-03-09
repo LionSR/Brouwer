@@ -235,8 +235,8 @@ def map_simplex_equiv {n m : Type*} [Fintype n] [Fintype m] (e : n ≃ m) :
     (stdSimplex ℝ n) ≃ (stdSimplex ℝ m) where
   toFun := map_simplex e
   invFun := map_simplex e.symm
-  left_inv x := by ext i; simp
-  right_inv x := by ext i; simp
+  left_inv x := by ext i; show x.1 (e.symm (e i)) = x.1 i; simp
+  right_inv x := by ext i; show x.1 (e (e.symm i)) = x.1 i; simp
 
 /-- Lifts component-wise equivalences to an equivalence on the space of mixed strategies. -/
 def map_mixedS_equiv {G : FinGame} (e : (i : G.I) → G.SS i ≃ Fin (Fintype.card (G.SS i))) :
@@ -244,9 +244,9 @@ def map_mixedS_equiv {G : FinGame} (e : (i : G.I) → G.SS i ≃ Fin (Fintype.ca
   toFun x i := map_simplex (e i) (x i)
   invFun x i := map_simplex (e i).symm (x i)
   left_inv x := by
-    funext i; ext j; simp [map_simplex_apply]
+    funext i; ext j; simp [map_simplex, map_simplex_apply]
   right_inv x := by
-    funext i; ext j; simp [map_simplex_apply]
+    funext i; ext j; simp [map_simplex, map_simplex_apply]
 
 
 
@@ -283,9 +283,9 @@ theorem Brouwer.mixedGame (f : G.mixedS → G.mixedS) (hf : Continuous f) : ∃ 
   let map_idx_inv : ((k : Fin n) → stdSimplex ℝ (Fin (card' k))) → ((k : Fin n) → stdSimplex ℝ (G.SS (eI.symm k))) :=
     fun z k => map_simplex (eS k).symm (z k)
   have map_idx_left : ∀ y, map_idx_inv (map_idx y) = y := by
-    intro y; funext k; ext j; simp [map_idx, map_idx_inv]
+    intro y; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex, map_simplex_apply]
   have map_idx_right : ∀ z, map_idx (map_idx_inv z) = z := by
-    intro z; funext k; ext j; simp [map_idx, map_idx_inv]
+    intro z; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex, map_simplex_apply]
 
   let φ : G.mixedS → ProductSimplices card' := fun x => map_idx (reindex x)
   let φ_inv : ProductSimplices card' → G.mixedS := fun w => reindex_inv (map_idx_inv w)

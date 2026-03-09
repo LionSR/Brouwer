@@ -56,14 +56,14 @@ abbrev TT.Ilt ( x y : TT n l) :=
 
 instance TT.IST : IsStrictTotalOrder (TT n l) (TT.Ilt i) where
   trichotomous := by
-    intro a b
-    repeat rw [TT.Ilt]
-    have h1 : toLex (a i, a) <  toLex (b i, b) ∨ toLex (a i, a) = toLex (b i, b) ∨ toLex (b i, b) < toLex (a i, a) :=
-      by apply IsTrichotomous.trichotomous
-    convert h1
-    suffices hh : a = b → a i = b i from
-      by simp;exact hh
-    intro h;rw [h]
+    intro a b hab hba
+    repeat rw [TT.Ilt] at hab hba ⊢
+    rcases lt_trichotomy (toLex (a i, a)) (toLex (b i, b)) with hlt | heq | hgt
+    · exact (hab hlt).elim
+    · have hpair : (a i, a) = (b i, b) := by
+        simpa using congrArg ofLex heq
+      exact congrArg Prod.snd hpair
+    · exact (hba hgt).elim
   irrefl := by simp
   trans := by
     intro a b c
@@ -188,14 +188,12 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
         exact Nat.lt_of_succ_le (hM k hk_in_C)
       exact h_nat_lt
   have h_not_dominant : ¬ TT.ILO.isDominant σ C := by
-    unfold isDominant
-    push_neg
-    use M
-    intro k hk
+    intro h_dom
+    rcases h_dom M with ⟨k, hk, hk_dom⟩
     rcases h_contradiction k hk with ⟨x, hx, hlt⟩
-    use x, hx
-    letI : LinearOrder (TT n l) := IndexedLOrder.IST k
-    rwa [← lt_iff_not_ge]
+    have hnot : ¬ x <[k] M := by
+      exact @not_lt_of_ge (TT n l) (IndexedLOrder.IST k).toPreorder M x (hk_dom x hx)
+    exact hnot hlt
   exact h_not_dominant h
 
 
@@ -380,9 +378,7 @@ instance stdSimplex.upidx (x y : stdSimplex ℝ (Fin n)) : Nonempty { i | x.1 i 
     . intro i _
       have : ¬ (x.1 i ≤ y.1 i) := by
         intro hle
-        apply h
-        use i
-        exact hle
+        exact h.false ⟨i, hle⟩
       exact lt_of_not_ge this
   rw [sum_y_eq_1, sum_x_eq_1] at sum_lt
   exact (lt_irrefl 1 sum_lt).elim
@@ -422,7 +418,9 @@ theorem exists_subseq_constant_of_finite_image {s : Finset α} (e : ℕ → α) 
     have preimages_all_finite : ∀ a ∈ s, Set.Finite (e ⁻¹' {a}) := by
       intro a ha
       by_contra hnf
-      have a_in_imgs : a ∈ imgs := by simp [imgs, ha, hnf]
+      have a_in_imgs : a ∈ imgs := by
+        rw [Finset.mem_filter]
+        exact ⟨ha, hnf⟩
       have : imgs ≠ ∅ := Finset.ne_empty_of_mem a_in_imgs
       contradiction
     have nat_finite : Set.Finite (Set.univ : Set ℕ) := by
@@ -591,12 +589,12 @@ theorem tendsto_diam_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin
           exact h_coord_diff_le
       _ ≤ 2 * Real.sqrt (n : ℝ) * ((n : ℝ) + 1) / (l k + 1) := by
           rw [div_le_div_iff_of_pos_right (by positivity : (0 : ℝ) < l k + 1)]
-          have h_assoc : 2 * Real.sqrt (n : ℝ) * ((n : ℝ) + 1) = 2 * (Real.sqrt (n : ℝ) * ((n : ℝ) + 1)) := by ring
-          rw [h_assoc, mul_le_mul_left (by positivity)]
-          apply le_mul_of_one_le_left (by positivity)
-          apply Real.one_le_sqrt.mpr
-          norm_cast
-          exact PNat.one_le n
+          have hsqrt : (1 : ℝ) ≤ Real.sqrt (n : ℝ) := by
+            apply Real.one_le_sqrt.mpr
+            norm_cast
+            exact PNat.one_le n
+          have hmul := mul_le_mul_of_nonneg_right hsqrt (by positivity : 0 ≤ (n : ℝ) + 1)
+          nlinarith
     apply Metric.diam_le_of_forall_dist_le (by positivity)
     intro x hx y hy
     rcases Finset.mem_image.mp hx with ⟨x', hx', rfl⟩
@@ -788,7 +786,9 @@ theorem Brouwer (hf : Continuous f): ∃ x , f x = x := by
   ext i_1
   by_cases hi : i_1 ∈ C
   · exact f_coords_eq_z_coords i_1 hi
-  · rw [f_coords_outside_C_zero i_1 hi, coords_outside_C_zero i_1 hi]
+  · have hf0 : (f z).1 i_1 = 0 := f_coords_outside_C_zero i_1 hi
+    have hz0 : z.1 i_1 = 0 := coords_outside_C_zero i_1 hi
+    simpa using hf0.trans hz0.symm
 
 
 end Brouwer
