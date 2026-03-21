@@ -244,9 +244,9 @@ def map_mixedS_equiv {G : FinGame} (e : (i : G.I) → G.SS i ≃ Fin (Fintype.ca
   toFun x i := map_simplex (e i) (x i)
   invFun x i := map_simplex (e i).symm (x i)
   left_inv x := by
-    funext i; ext j; simp [map_simplex, map_simplex_apply]
+    funext i; ext j; simp [map_simplex]
   right_inv x := by
-    funext i; ext j; simp [map_simplex, map_simplex_apply]
+    funext i; ext j; simp [map_simplex]
 
 
 
@@ -283,9 +283,9 @@ theorem Brouwer.mixedGame (f : G.mixedS → G.mixedS) (hf : Continuous f) : ∃ 
   let map_idx_inv : ((k : Fin n) → stdSimplex ℝ (Fin (card' k))) → ((k : Fin n) → stdSimplex ℝ (G.SS (eI.symm k))) :=
     fun z k => map_simplex (eS k).symm (z k)
   have map_idx_left : ∀ y, map_idx_inv (map_idx y) = y := by
-    intro y; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex, map_simplex_apply]
+    intro y; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex]
   have map_idx_right : ∀ z, map_idx (map_idx_inv z) = z := by
-    intro z; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex, map_simplex_apply]
+    intro z; funext k; ext j; simp [map_idx, map_idx_inv, map_simplex]
 
   let φ : G.mixedS → ProductSimplices card' := fun x => map_idx (reindex x)
   let φ_inv : ProductSimplices card' → G.mixedS := fun w => reindex_inv (map_idx_inv w)
@@ -320,7 +320,7 @@ theorem Brouwer.mixedGame (f : G.mixedS → G.mixedS) (hf : Continuous f) : ∃ 
       rw [eqRec_heq_iff_heq]
       congr
       .  symm
-         apply eqRec_heq'
+         apply eqRec_heq_self
 
     have h_map : Continuous (map_simplex eSi.symm) := by
       apply Continuous.subtype_mk
