@@ -77,7 +77,7 @@ lemma index_split_existence (k : Fin (total_card card)) : ∃ (p : Σ i, Fin (ca
             · exact h_all_ge (Finset.univ.min' Finset.univ_nonempty) (Finset.mem_univ _)
             · exact Finset.min'_le _ _ (Finset.mem_univ i₀)
           exact this h_min
-        push_neg at this
+        push Not at this
         obtain ⟨j, _, hj⟩ := this
         exact ⟨j, Finset.mem_filter.mpr ⟨Finset.mem_univ j, hj⟩⟩
       let j₀ := pred_set.max' pred_set_nonempty

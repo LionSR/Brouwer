@@ -85,7 +85,7 @@ lemma mixed_g_linear : G.mixed_g i (update  x i y) = ∑ s : G.SS i, y s * G.mix
            by_cases h1 : j = i
            · rw [h1, Function.update_self]
              simp
-           · push_neg at h1
+           · push Not at h1
              rw [Function.update_of_ne (show j ≠ i by exact h1)]
              set t := fun j =>(update x i y j) (f j)
              have h2 : t j = (x j) (f j) := by
@@ -109,7 +109,7 @@ lemma mixed_g_linear : G.mixed_g i (update  x i y) = ∑ s : G.SS i, y s * G.mix
         simp [hxx]
       · simp only [hxx, ↓reduceIte, zero_eq_mul]
         right
-        push_neg at hxx
+        push Not at hxx
         rw [stdSimplex.pure_eval_neq hxx]
 
   rw [h1, Finset.sum_mul]
@@ -123,7 +123,7 @@ lemma mixed_g_linear : G.mixed_g i (update  x i y) = ∑ s : G.SS i, y s * G.mix
   by_cases h2 : j = i
   · rw [h2,Function.update_self]
     simp
-  · push_neg at h2
+  · push Not at h2
     nth_rw 2 [Function.update_of_ne (show j ≠ i by exact h2)]
     set p := fun j =>(update x i y j) (f j)
     have h3 : p j = (x j) (f j) := by
@@ -504,7 +504,7 @@ theorem ExistsNashEq : ∃ σ : G.mixedS , mixedNashEquilibrium σ := by {
     nlinarith
 
   · exfalso -- This case cannot happen
-    push_neg at H
+    push Not at H
     obtain ⟨t,ht⟩ := H
     have H1 :  1 < ∑ b, g_function i σ b := by
       have h1 : 1 ≤ ∑ b : G.SS i, g_function i σ b := by

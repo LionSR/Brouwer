@@ -140,7 +140,7 @@ lemma keylemma_of_dominant {σ : Finset T} {C: Finset I} (h1 : IST.isDominant σ
     · intro ha
       rw [mem_image]
       by_contra  hm
-      push_neg at hm
+      push Not at hm
       obtain ⟨i,hi1,hi2⟩ := h1 a
       replace hm := hm i hi1
       rw [mini] at hm
@@ -347,7 +347,7 @@ lemma sublemma_3_1 [Fintype T] (τ : Finset T) (D : Finset I)
         have hk_in_D : k ∈ D := (Finset.mem_erase.mp hk_in_erase).2
         have hk_ne_i : k ≠ i := (Finset.mem_erase.mp hk_in_erase).1
         use k, hk_in_D, hk_ne_i
-    · push_neg at h_case
+    · push Not at h_case
       obtain ⟨h_i_ne_a, h_i_ne_b⟩ := h_case
 
       have h_a_in_erase : a ∈ D.erase i := Finset.mem_erase.mpr ⟨h_i_ne_a.symm, ha_mem⟩
@@ -359,7 +359,7 @@ lemma sublemma_3_1 [Fintype T] (τ : Finset T) (D : Finset I)
 
       have h_image_lt : ((D.erase i).image (mini h_nonempty)).card < (D.erase i).card := by
         by_contra h_not_lt
-        push_neg at h_not_lt
+        push Not at h_not_lt
         have h_eq : ((D.erase i).image (mini h_nonempty)).card = (D.erase i).card :=
           le_antisymm Finset.card_image_le h_not_lt
         have h_inj : Set.InjOn (mini h_nonempty) (D.erase i : Set I) :=
@@ -379,7 +379,7 @@ lemma sublemma_3_1 [Fintype T] (τ : Finset T) (D : Finset I)
     unfold M_set at h_Mi_empty
     simp only [Set.mem_setOf_eq, Set.eq_empty_iff_forall_notMem] at h_Mi_empty
     specialize h_Mi_empty y
-    push_neg at h_Mi_empty
+    push Not at h_Mi_empty
     obtain ⟨k, hk_mem, hk_ne_i, hk_not_lt⟩ := h_Mi_empty
     use k
     constructor
@@ -470,7 +470,7 @@ lemma sublemma_3_2 [Fintype T] (τ : Finset T) (D : Finset I) (x : T)
     have h_i_in_ab : i ∈ ({a, b} : Finset I) := by
       by_cases hik : i = a ∨ i = b
       · simp [hik]
-      · push_neg at hik
+      · push Not at hik
         obtain ⟨hia, hib⟩ := hik
         have h_mini_eq_for_ne_i : ∀ k ∈ D, k ≠ i → mini h_insert_nonempty k = mini h_nonempty k := by
           intros k hk_mem hk_ne_i
@@ -563,7 +563,7 @@ lemma sublemma_3_2 [Fintype T] (τ : Finset T) (D : Finset I) (x : T)
           have h_y_le_x : y ≤[k] x := h_x_is_max.2 y h_y_in_M
           exact not_le.mpr h_x_lt_y h_y_le_x
         simp [M_set] at h_y_not_in_M
-        push_neg at h_y_not_in_M
+        push Not at h_y_not_in_M
         obtain ⟨j, hj_in_D, hj_ne_k, hj_not_lt⟩ := h_y_not_in_M
         use j, hj_in_D
         intro z hz
@@ -687,7 +687,7 @@ lemma odoor_index_in_pair [Fintype T] (τ : Finset T) (D : Finset I) (C : Finset
     j ∈ ({a, b} : Finset I) := by
   by_contra h_not_in
   simp only [Finset.mem_insert, Finset.mem_singleton] at h_not_in
-  push_neg at h_not_in
+  push Not at h_not_in
   obtain ⟨hj_ne_a, hj_ne_b⟩ := h_not_in
   have ha_in_C : a ∈ C := by
     have ha_in_D : a ∈ D := ha_mem
@@ -856,7 +856,7 @@ theorem internal_door_two_rooms [Fintype T] (τ : Finset T) (D : Finset I)
           rw [h_card_eq] at h_card_D
           have hj_in_ab : j = a ∨ j = b := by
             by_contra h_not_in
-            push_neg at h_not_in
+            push Not at h_not_in
             obtain ⟨hj_ne_a, hj_ne_b⟩ := h_not_in
             have ha_in_C : a ∈ C := by
               have ha_in_D : a ∈ D := ha_mem
@@ -1762,7 +1762,7 @@ lemma doors_of_NCroom [DecidableEq T] (h_room : isRoom σ C) (h_nc : isNearlyCol
 
     have h_collision_exists : ∃ x y, x ∈ σ ∧ y ∈ σ ∧ x ≠ y ∧ c x = c y := by
       by_contra h_no_collision
-      push_neg at h_no_collision
+      push Not at h_no_collision
       have h_inj_on_σ : Set.InjOn c σ := by
         intro x h_x y h_y h_eq
         by_contra h_ne
@@ -2096,7 +2096,7 @@ lemma doors_of_NCroom [DecidableEq T] (h_room : isRoom σ C) (h_nc : isNearlyCol
             · left; simp [door1, τ₁, h_z_eq_x]
             · right; simp [door2, τ₂, h_z_eq_y]
           · exfalso
-            push_neg at h_z_cases
+            push Not at h_z_cases
             have h_card_is_one : (C \ (σ.erase z).image c).card = 1 := by rw [←h_D_eq_C, ←h_τ_eq]; exact h_nc_τD.2
             have h_card_is_two : (C \ (σ.erase z).image c).card = 2 := by
               have h_uniq_z : ∀ w ∈ σ, c w = c z → w = z := by

@@ -94,7 +94,7 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
 (h2 : σ.Nonempty):
   l < ∑ k ∈ C, (σ.image (fun x => (x k : ℕ))).min' (Finset.image_nonempty.mpr h2) + C.card := by
   by_contra h_not
-  push_neg at h_not
+  push Not at h_not
   let m := fun k => (σ.image (fun x => (x k : ℕ))).min' (Finset.image_nonempty.mpr h2)
   have h_sum_bound : ∑ k ∈ C, m k + C.card ≤ l := h_not
   have h_sum_plus_one : ∑ k ∈ C, (m k + 1) ≤ l := by
@@ -181,7 +181,7 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
           by_cases h_case : (x_min k : ℕ) ≤ (x k : ℕ)
           · exact h_case
           · exfalso
-            push_neg at h_case
+            push Not at h_case
             have h_x_lt_min : x <[k] x_min := by
               apply TT.Ilt_keyprop
               exact h_case
@@ -370,7 +370,7 @@ variable {n l}
 
 instance stdSimplex.upidx (x y : stdSimplex ℝ (Fin n)) : Nonempty { i | x.1 i ≤ y.1 i} := by
   by_contra h
-  push_neg at h
+  push Not at h
   have sum_x_eq_1 := x.2.2
   have sum_y_eq_1 := y.2.2
   have sum_lt : Finset.sum Finset.univ y.1 < Finset.sum Finset.univ x.1 := by
@@ -450,7 +450,7 @@ theorem exists_subseq_constant_of_finite_image {s : Finset α} (e : ℕ → α) 
   have h_exists_larger : ∀ k : ℕ, ∃ m ∈ preimage, k < m := by
     intro k
     by_contra h_not
-    push_neg at h_not
+    push Not at h_not
     have : preimage ⊆ {n | n ≤ k} := fun n hn => h_not n hn
     have h_finite : Set.Finite preimage := (Set.finite_le_nat k).subset this
     exact preimage_infinite h_finite

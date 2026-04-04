@@ -58,10 +58,10 @@ lemma wsum_magic_ineq [DecidableEq α] [LinearOrder k] [IsOrderedCancelAddMonoid
   ∑ i : α, (σ i) *  f i = c → ∃ i, 0 < σ i ∧ f i ≤ c := by
     intro H1
     by_contra H2
-    push_neg at H2
+    push Not at H2
     have h_exists_pos : ∃ i, 0 < σ i := by
       by_contra h_all_zero
-      push_neg at h_all_zero
+      push Not at h_all_zero
       have h_all_eq_zero : ∀ i, σ i = 0 := by
         intro i
         exact le_antisymm (h_all_zero i) (σ.2.1 i)
