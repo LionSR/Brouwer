@@ -32,7 +32,7 @@ instance TT.inhabited : Inhabited (TT n l) where
 
 instance TT.funlike : FunLike (TT n l) (Fin n) (Fin (l+1)) where
   coe := fun a => a.1
-  coe_injective' := by simp
+  coe_injective' := fun _ _ h => Subtype.ext h
 
 variable {n l} in
 def TTtostdSimplex (x : TT n l) : stdSimplex ℝ (Fin n) := ⟨fun i => x i / l, by
@@ -63,7 +63,9 @@ instance TT.IST : IsStrictTotalOrder (TT n l) (TT.Ilt i) where
         simpa using congrArg ofLex heq
       exact congrArg Prod.snd hpair
     · exact (hba hgt).elim
-  irrefl := by simp
+  irrefl := by
+    intro a
+    exact lt_irrefl _
   trans := by
     intro a b c
     rw [TT.Ilt]
@@ -86,14 +88,14 @@ lemma TT.Ilt_keyprop (a b : TT n l) :
   a i < b i → a <[i] b := by
   intro h
   rw [TT.Ilt_def,Ilt,Prod.Lex.lt_iff]
-  simp [h]
+  exact Or.inl h
 
 lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isDominant σ C)
 (h2 : σ.Nonempty):
-  l < ∑ k ∈ C, (σ.image (fun x => (x k : ℕ))).min' (by simp [Finset.image_nonempty, h2]) + C.card := by
+  l < ∑ k ∈ C, (σ.image (fun x => (x k : ℕ))).min' (Finset.image_nonempty.mpr h2) + C.card := by
   by_contra h_not
   push_neg at h_not
-  let m := fun k => (σ.image (fun x => (x k : ℕ))).min' (by simp [Finset.image_nonempty, h2])
+  let m := fun k => (σ.image (fun x => (x k : ℕ))).min' (Finset.image_nonempty.mpr h2)
   have h_sum_bound : ∑ k ∈ C, m k + C.card ≤ l := h_not
   have h_sum_plus_one : ∑ k ∈ C, (m k + 1) ≤ l := by
     rw [Finset.sum_add_distrib, Finset.sum_const, nsmul_one]
@@ -141,11 +143,13 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
     let M_val : Fin n → Fin (l + 1) := fun k => ⟨M_coords k, Nat.lt_succ_of_le (h_M_coords_bound k)⟩
     use ⟨M_val, by simp [M_val, h_M_coords_sum]⟩
     intro k hk_in_C
-    simp only [TT.funlike]
     by_cases h_is_zero : k = 0
     · rw [h_is_zero] at hk_in_C ⊢
-      simp [M_val, M_coords, M', hk_in_C]
-    · simp [M_val, M_coords, h_is_zero, M', hk_in_C]
+      change m 0 < M_coords 0
+      simp [M_coords, M', hk_in_C, R]
+      omega
+    · change m k < M_coords k
+      simp [M_coords, h_is_zero, M', hk_in_C]
   obtain ⟨M, hM⟩ := h_exists_point
   have h_min_less : ∀ k ∈ C, ∃ x_min ∈ σ, ∀ x ∈ σ, x_min ≤[k] x := by
     intro k _
@@ -164,7 +168,7 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
     constructor
     · exact Finset.min'_mem σ h2
     · apply TT.Ilt_keyprop
-      have h_min_coord : (x_min k : ℕ) = (σ.image (fun x => (x k : ℕ))).min' (by simp [Finset.image_nonempty, h2]) := by
+      have h_min_coord : (x_min k : ℕ) = (σ.image (fun x => (x k : ℕ))).min' (Finset.image_nonempty.mpr h2) := by
         symm
         apply le_antisymm
         · apply Finset.min'_le
@@ -202,7 +206,7 @@ theorem size_bound_in (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.is
     := by
   by_cases hσ : σ.Nonempty
   · intro x hx y hy i
-    let m k := (σ.image (fun z => (z k : ℕ))).min' (by simp [Finset.image_nonempty, hσ])
+    let m k := (σ.image (fun z => (z k : ℕ))).min' (Finset.image_nonempty.mpr hσ)
     let m' i := if h_i : i ∈ C then m i else 0
     have h_le_l_sub_sum : (l : ℕ) - ∑ k ∈ C, m k < C.card := by
       have h_key : l < ∑ k ∈ C, m k + C.card := size_bound_key n l σ C h hσ
@@ -282,13 +286,11 @@ theorem size_bound_in (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.is
         simp only [m'] at this ⊢
         split_ifs at this ⊢ with h_case
         · have : (z i : ℕ) - m i < C.card := this
-          simp
           have h_le : m i ≤ (z i : ℕ) := by
             apply Finset.min'_le
             apply Finset.mem_image_of_mem
             exact hz
-          rw [← Int.ofNat_sub h_le]
-          exact Int.ofNat_lt.mpr this
+          exact_mod_cast this
         · simp only [Int.ofNat_zero, sub_zero]
           exact Int.ofNat_lt.mpr this
       calc
@@ -316,7 +318,7 @@ theorem size_bound_out (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.i
     := by
   by_cases hσ : σ.Nonempty
   · intro x hx i hi_not_C
-    let m k := (σ.image (fun z => (z k : ℕ))).min' (by simp [Finset.image_nonempty, hσ])
+    let m k := (σ.image (fun z => (z k : ℕ))).min' (Finset.image_nonempty.mpr hσ)
     have h_le_l_sub_sum : l - ∑ k ∈ C, m k < C.card := by
       have h_sum_le_l : ∑ k ∈ C, m k ≤ l := by
         rcases hσ with ⟨x, hx⟩
