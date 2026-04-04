@@ -525,7 +525,7 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
     have hx_mem : x ∈ σ := (pick_colorful_point colorful_proof).2
     have h_dom : TT.ILO.isDominant σ C_l := colorful_proof.1
     have h_bound := size_bound_out n l_pnat σ C_l h_dom x hx_mem i hiC_l
-    simp only [TT.funlike, TTtostdSimplex, Subtype.coe_mk]
+    simp only [TTtostdSimplex, Subtype.coe_mk]
     have h_eq : (↑l_pnat : ℝ) = ↑(g l') + 1 := by simp [l_pnat, PNat.mk_coe]
     rw [h_eq]
     rw [div_le_div_iff_of_pos_right (by positivity : (0 : ℝ) < ↑(g l') + 1)]
@@ -533,7 +533,7 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
       exact_mod_cast Nat.lt_succ_of_le (Int.ofNat_le.mp (Int.le_of_lt_add_one h_bound))
     exact le_of_lt h_bound_real
 
-def hpkg_aux:
+@[reducible] def hpkg_aux:
   Nonempty {(z , h) : (stdSimplex ℝ  (Fin n)) × (ℕ → ℕ) | StrictMono h ∧ Filter.Tendsto
     ((fun l' => (room_point_seq f (g1 f l'): stdSimplex ℝ (Fin n))) ∘ h)
     Filter.atTop (𝓝 z) } := by
