@@ -32,7 +32,7 @@ instance TT.inhabited : Inhabited (TT n l) where
 
 instance TT.funlike : FunLike (TT n l) (Fin n) (Fin (l+1)) where
   coe := fun a => a.1
-  coe_injective' := fun _ _ h => Subtype.ext h
+  coe_injective := fun _ _ h => Subtype.ext h
 
 variable {n l} in
 def TTtostdSimplex (x : TT n l) : stdSimplex ℝ (Fin n) := ⟨fun i => x i / l, by
@@ -395,8 +395,8 @@ def room_seq (l' : ℕ) :=
   let l : PNat := ⟨l'+1,Nat.zero_lt_succ _⟩
   Classical.choice (TT.ILO.Scarf (@Fcolor n l f)).to_subtype
 
-def room_point_seq (l' : ℕ) := pick_colorful_point
-(Finset.mem_filter.1 (room_seq f l').2).2 |>.1
+def room_point_seq (l' : ℕ) :=
+  pick_colorful_point (Finset.mem_filter.1 (room_seq f l').2).2
 
 
 
@@ -522,14 +522,14 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
     have hiC_l : i ∉ C_l := h_C_l ▸ hiC
     let x := room_point_seq f (g l')
     let colorful_proof := (Finset.mem_filter.mp rs.2).2
-    have hx_mem : x ∈ σ := (pick_colorful_point colorful_proof).2
+    have hx_mem : (x : TT n l_pnat) ∈ σ := x.2
     have h_dom : TT.ILO.isDominant σ C_l := colorful_proof.1
-    have h_bound := size_bound_out n l_pnat σ C_l h_dom x hx_mem i hiC_l
+    have h_bound := size_bound_out n l_pnat σ C_l h_dom (x : TT n l_pnat) hx_mem i hiC_l
     simp only [TTtostdSimplex, Subtype.coe_mk]
     have h_eq : (↑l_pnat : ℝ) = ↑(g l') + 1 := by simp [l_pnat, PNat.mk_coe]
     rw [h_eq]
     rw [div_le_div_iff_of_pos_right (by positivity : (0 : ℝ) < ↑(g l') + 1)]
-    have h_bound_real : ((x i : ℕ) : ℝ) < (↑n + 1 : ℝ) := by
+    have h_bound_real : ((((x : TT n l_pnat) i : ℕ) : ℝ)) < (↑n + 1 : ℝ) := by
       exact_mod_cast Nat.lt_succ_of_le (Int.ofNat_le.mp (Int.le_of_lt_add_one h_bound))
     exact le_of_lt h_bound_real
 
@@ -789,7 +789,8 @@ theorem Brouwer (hf : Continuous f): ∃ x , f x = x := by
   · exact f_coords_eq_z_coords i_1 hi
   · have hf0 : (f z).1 i_1 = 0 := f_coords_outside_C_zero i_1 hi
     have hz0 : z.1 i_1 = 0 := coords_outside_C_zero i_1 hi
-    simpa using hf0.trans hz0.symm
+    change (f z).1 i_1 = z.1 i_1
+    exact hf0.trans hz0.symm
 
 
 end Brouwer
