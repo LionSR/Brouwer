@@ -563,7 +563,7 @@ lemma blockSum_pushTowardsZ_pos (i : I) (x : BigSimplex card) :
 lemma blockSum_continuous (i : I) : Continuous (blockSum card i) := by
   change Continuous (fun x : BigSimplex card =>
     ∑ j : Fin (card i), x.1 (index_combine card ⟨i, j⟩))
-  apply continuous_finset_sum
+  apply continuous_finsetSum
   intro j _
   exact (continuous_apply _).comp continuous_subtype_val
 
@@ -571,7 +571,7 @@ lemma blockSum_continuous (i : I) : Continuous (blockSum card i) := by
 lemma deficit_continuous : Continuous (deficit card) := by
   change Continuous (fun x : BigSimplex card =>
     ∑ i, max (0 : ℝ) ((blockWeight card i) - blockSum card i x))
-  apply continuous_finset_sum
+  apply continuous_finsetSum
   intro i _
   exact continuous_const.max (continuous_const.sub (blockSum_continuous card i))
 
@@ -615,7 +615,7 @@ lemma project_continuous : Continuous (project_to_product card) := by
       blockSum card i (pushTowardsZ card x)) := by
     change Continuous (fun x : BigSimplex card =>
       ∑ j : Fin (card i), (pushTowardsZ card x).1 (index_combine card ⟨i, j⟩))
-    apply continuous_finset_sum
+    apply continuous_finsetSum
     intro j _
     exact (continuous_apply (index_combine card ⟨i, j⟩)).comp
       (continuous_subtype_val.comp (pushTowardsZ_continuous card))

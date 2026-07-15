@@ -533,7 +533,7 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
       exact_mod_cast Nat.lt_succ_of_le (Int.ofNat_le.mp (Int.le_of_lt_add_one h_bound))
     exact le_of_lt h_bound_real
 
-@[reducible] def hpkg_aux:
+theorem hpkg_aux:
   Nonempty {(z , h) : (stdSimplex ℝ  (Fin n)) × (ℕ → ℕ) | StrictMono h ∧ Filter.Tendsto
     ((fun l' => (room_point_seq f (g1 f l'): stdSimplex ℝ (Fin n))) ∘ h)
     Filter.atTop (𝓝 z) } := by
@@ -593,7 +593,7 @@ theorem tendsto_diam_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin
           have hsqrt : (1 : ℝ) ≤ Real.sqrt (n : ℝ) := by
             apply Real.one_le_sqrt.mpr
             norm_cast
-            exact PNat.one_le n
+            exact one_le
           have hmul := mul_le_mul_of_nonneg_right hsqrt (by positivity : 0 ≤ (n : ℝ) + 1)
           nlinarith
     apply Metric.diam_le_of_forall_dist_le (by positivity)
