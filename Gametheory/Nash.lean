@@ -11,8 +11,8 @@ noncomputable section
 
 universe u v
 
--- The player and strategy universes are intentionally independent, so the
--- semantically meaningful `max u v` structure universe triggers `checkUnivs`.
+-- The player and strategy universes are intentionally independent. The generated structure
+-- lives in `Type (max (u + 1) (v + 1))`, so `checkUnivs`'s suggestion to merge them does not apply.
 set_option linter.checkUnivs false in
 /-- A game consists of a family of payoff maps $g^i : (\prod_i S_i) \to \mathbb{R}$. -/
 structure Game where
@@ -44,6 +44,8 @@ end Game
 
 open Game
 
+-- `FinGame` preserves `Game`'s independent player and strategy universes and therefore has the
+-- same `Type (max (u + 1) (v + 1))` sort, so the same localized suppression applies.
 set_option linter.checkUnivs false in
 structure FinGame extends Game where
   FinI : Fintype I
