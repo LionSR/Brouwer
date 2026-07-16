@@ -11,13 +11,10 @@ noncomputable section
 
 universe u v
 
-/-
-A game is a set of maps g^i : Πᵢ S i → ℝ.
-The player and strategy universes are intentionally independent; the resulting
-`max u v` in the structure sort triggers `checkUnivs` despite both parameters
-being semantically meaningful.
--/
+-- The player and strategy universes are intentionally independent, so the
+-- semantically meaningful `max u v` structure universe triggers `checkUnivs`.
 set_option linter.checkUnivs false in
+/-- A game consists of a family of payoff maps $g^i : (\prod_i S_i) \to \mathbb{R}$. -/
 structure Game where
     I : Type u          -- The set of player
     --deEqI : DecidableEq I := inferInstance -- Decidable Eq
