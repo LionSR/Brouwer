@@ -9,15 +9,17 @@ open Function
 
 noncomputable section
 
-#check Brouwer_Product
-/-
-A game is a set of maps g^i : Πᵢ S i → ℝ
--/
+universe u v
+
+-- The player and strategy universes are intentionally independent. The generated structure
+-- lives in `Type (max (u + 1) (v + 1))`, so `checkUnivs`'s suggestion to merge them does not apply.
+set_option linter.checkUnivs false in
+/-- A game consists of a family of payoff maps $g^i : (\prod_i S_i) \to \mathbb{R}$. -/
 structure Game where
-    I : Type*           -- The set of player
+    I : Type u          -- The set of player
     --deEqI : DecidableEq I := inferInstance -- Decidable Eq
     HI : Inhabited I     -- at least one player
-    SS : I → Type*       -- S is the set of strategies
+    SS : I → Type v      -- S is the set of strategies
     HSS (i :I) : Inhabited (SS i) -- The set of strategies is nonempty
     --deEqSS (i : I) : DecidableEq (SS i)
     g : I → (Π i, SS i) →  ℝ
@@ -42,6 +44,9 @@ end Game
 
 open Game
 
+-- `FinGame` preserves `Game`'s independent player and strategy universes and therefore has the
+-- same `Type (max (u + 1) (v + 1))` sort, so the same localized suppression applies.
+set_option linter.checkUnivs false in
 structure FinGame extends Game where
   FinI : Fintype I
   FinSS : ∀ i : I , Fintype (SS i)
@@ -60,8 +65,6 @@ variable (G) in
 abbrev mixedS  := (i : G.I) → stdSimplex ℝ (G.SS i)
 
 def mixed_g (i : G.I) (m : Π i, S (G.SS i) ) : ℝ := ∑ s : (Π j, G.SS j) , (∏ j,  m j (s j)) * (G.g i s)
-
-#print mixed_g
 
 
 lemma mixed_g_linear : G.mixed_g i (update  x i y) = ∑ s : G.SS i, y s * G.mixed_g i (update x i (stdSimplex.pure s)) := by
@@ -328,7 +331,8 @@ theorem Brouwer.mixedGame (f : G.mixedS → G.mixedS) (hf : Continuous f) : ∃ 
       exact (continuous_apply (((eSi.symm).symm j))).comp continuous_subtype_val
     have h_eval : Continuous (fun w : ProductSimplices card' => w (eI i)) :=
       continuous_apply (eI i)
-    simpa [this] using h_map.comp h_eval
+    rw [this]
+    exact h_map.comp h_eval
 
   let f' : ProductSimplices card' → ProductSimplices card' := φ ∘ f ∘ φ_inv
   have hf' : Continuous f' := hφ_cont.comp (hf.comp hφinv_cont)
@@ -418,10 +422,10 @@ lemma cg : Continuous fun a => g_function (G:=G) i a s := by
     · continuity
     · unfold mixed_g
       apply Continuous.sub
-      · apply continuous_finset_sum
+      · apply continuous_finsetSum
         intro i' _
         apply Continuous.mul
-        · apply continuous_finset_prod
+        · apply continuous_finsetProd
           intro i'' _
           by_cases h : i'' = i
           · rw [h]
@@ -434,10 +438,10 @@ lemma cg : Continuous fun a => g_function (G:=G) i a s := by
             continuity
             apply Continuous.comp <;> continuity
         · continuity
-      · apply continuous_finset_sum
+      · apply continuous_finsetSum
         intro i' _
         apply Continuous.mul
-        · apply continuous_finset_prod
+        · apply continuous_finsetProd
           intro i'' _
           by_cases h : i'' = i
           · have : (fun (a : G.mixedS) => (a i) (i' i)) = (fun f => f (i' i)) ∘ Subtype.val ∘ fun a => a i := by
@@ -467,7 +471,7 @@ lemma nash_map_cont : Continuous $ nash_map G :=
   intro s
   apply Continuous.div
   · apply cg
-  · apply continuous_finset_sum
+  · apply continuous_finsetSum
     intro i _; apply cg
   · intro σ
     apply ne_of_gt

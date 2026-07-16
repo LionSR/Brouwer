@@ -48,8 +48,7 @@ lemma index_split_existence (k : Fin (total_card card)) : ∃ (p : Σ i, Fin (ca
     have := WellFounded.min_le wellFounded_lt hj
     exact not_le_of_gt hlt this
   have h_lt : k.val < prefix_sum card i₀ + (card i₀ : ℕ) := by
-    simp at i₀_in_S
-    change k.val < (∑ j ∈ Finset.univ.filter (· ≤ i₀), (card j : ℕ)) at i₀_in_S
+    dsimp only [S, Set.mem_setOf_eq, prefix_sum_inclusive] at i₀_in_S
     have : (∑ j ∈ Finset.univ.filter (· ≤ i₀), (card j : ℕ)) =
             (∑ j ∈ Finset.univ.filter (· < i₀), (card j : ℕ)) + (card i₀ : ℕ) := by
       have h_split : Finset.univ.filter (· ≤ i₀) = Finset.univ.filter (· < i₀) ∪ {i₀} := by
@@ -563,7 +562,7 @@ lemma blockSum_pushTowardsZ_pos (i : I) (x : BigSimplex card) :
 lemma blockSum_continuous (i : I) : Continuous (blockSum card i) := by
   change Continuous (fun x : BigSimplex card =>
     ∑ j : Fin (card i), x.1 (index_combine card ⟨i, j⟩))
-  apply continuous_finset_sum
+  apply continuous_finsetSum
   intro j _
   exact (continuous_apply _).comp continuous_subtype_val
 
@@ -571,7 +570,7 @@ lemma blockSum_continuous (i : I) : Continuous (blockSum card i) := by
 lemma deficit_continuous : Continuous (deficit card) := by
   change Continuous (fun x : BigSimplex card =>
     ∑ i, max (0 : ℝ) ((blockWeight card i) - blockSum card i x))
-  apply continuous_finset_sum
+  apply continuous_finsetSum
   intro i _
   exact continuous_const.max (continuous_const.sub (blockSum_continuous card i))
 
@@ -597,7 +596,9 @@ lemma pushTowardsZ_continuous : Continuous (pushTowardsZ card) := by
     hone_minus_t.mul hxk
   have hterm2 : Continuous (fun x => (tPush card x) * (z_uniform card).1 k) :=
     (tPush_continuous card).mul continuous_const
-  simpa [pushTowardsZ] using hterm1.add hterm2
+  change Continuous (fun x =>
+    ((1 : ℝ) - tPush card x) * x.1 k + tPush card x * (z_uniform card).1 k)
+  exact hterm1.add hterm2
 
 /-- Continuity of `project_to_product`. -/
 lemma project_continuous : Continuous (project_to_product card) := by
@@ -613,7 +614,7 @@ lemma project_continuous : Continuous (project_to_product card) := by
       blockSum card i (pushTowardsZ card x)) := by
     change Continuous (fun x : BigSimplex card =>
       ∑ j : Fin (card i), (pushTowardsZ card x).1 (index_combine card ⟨i, j⟩))
-    apply continuous_finset_sum
+    apply continuous_finsetSum
     intro j _
     exact (continuous_apply (index_combine card ⟨i, j⟩)).comp
       (continuous_subtype_val.comp (pushTowardsZ_continuous card))
