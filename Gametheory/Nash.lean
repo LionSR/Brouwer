@@ -9,16 +9,20 @@ open Function
 
 noncomputable section
 
-universe u
+universe u v
 
 /-
-A game is a set of maps g^i : Πᵢ S i → ℝ
+A game is a set of maps g^i : Πᵢ S i → ℝ.
+The player and strategy universes are intentionally independent; the resulting
+`max u v` in the structure sort triggers `checkUnivs` despite both parameters
+being semantically meaningful.
 -/
+set_option linter.checkUnivs false in
 structure Game where
     I : Type u          -- The set of player
     --deEqI : DecidableEq I := inferInstance -- Decidable Eq
     HI : Inhabited I     -- at least one player
-    SS : I → Type u      -- S is the set of strategies
+    SS : I → Type v      -- S is the set of strategies
     HSS (i :I) : Inhabited (SS i) -- The set of strategies is nonempty
     --deEqSS (i : I) : DecidableEq (SS i)
     g : I → (Π i, SS i) →  ℝ
@@ -43,6 +47,7 @@ end Game
 
 open Game
 
+set_option linter.checkUnivs false in
 structure FinGame extends Game where
   FinI : Fintype I
   FinSS : ∀ i : I , Fintype (SS i)
