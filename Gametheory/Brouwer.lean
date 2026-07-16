@@ -395,7 +395,7 @@ def room_seq (l' : ℕ) :=
   let l : PNat := ⟨l'+1,Nat.zero_lt_succ _⟩
   Classical.choice (TT.ILO.Scarf (@Fcolor n l f)).to_subtype
 
-def room_point_seq (l' : ℕ) :=
+def room_point_seq (l' : ℕ) : (room_seq f l').1.1 :=
   pick_colorful_point (Finset.mem_filter.1 (room_seq f l').2).2
 
 
