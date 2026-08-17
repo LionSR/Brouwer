@@ -23,12 +23,13 @@ instance TT.finite : Finite (TT n l) := by
 
 instance TT.inhabited : Inhabited (TT n l) where
   default :=
-    ⟨ fun i => if i = 0 then Fin.last l else 0,  by
-      simp only [TT, Set.mem_setOf_eq]
+    ⟨fun i => if i = 0 then Fin.last l else 0, by
+      change ∑ i : Fin n, ((if i = 0 then Fin.last l else 0 : Fin (l + 1)) : ℕ) = l
       rw [Finset.sum_eq_single (0 : Fin n)]
       · simp
-      · intro b _ hb; simp [hb]
-      · simp [Fin.val_last] ⟩
+      · intro b _ hb
+        simp [hb]
+      · simp [Fin.val_last]⟩
 
 instance TT.funlike : FunLike (TT n l) (Fin n) (Fin (l+1)) where
   coe := fun a => a.1
@@ -141,7 +142,10 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
         · simp [M', hk_in_C]; exact Nat.le_trans (Finset.single_le_sum (fun k _ => Nat.zero_le (m k + 1)) hk_in_C) h_sum_plus_one
         · simp [M', hk_in_C]
     let M_val : Fin n → Fin (l + 1) := fun k => ⟨M_coords k, Nat.lt_succ_of_le (h_M_coords_bound k)⟩
-    use ⟨M_val, by simp [M_val, h_M_coords_sum]⟩
+    let M : TT n l := ⟨M_val, by
+      change ∑ k, M_coords k = l
+      exact h_M_coords_sum⟩
+    use M
     intro k hk_in_C
     by_cases h_is_zero : k = 0
     · rw [h_is_zero] at hk_in_C ⊢
@@ -392,12 +396,19 @@ noncomputable def stdSimplex.pick (x  y : stdSimplex ℝ (Fin n)) := Classical.c
 def Fcolor (x : TT n l) : Fin n := stdSimplex.pick x (f x)
 
 def room_seq (l' : ℕ) :=
-  let l : PNat := ⟨l'+1,Nat.zero_lt_succ _⟩
+  let l : PNat := ⟨l' + 1, Nat.zero_lt_succ _⟩
+  letI : Inhabited (TT n l) := TT.inhabited n l
   Classical.choice (TT.ILO.Scarf (@Fcolor n l f)).to_subtype
 
-def room_point_seq (l' : ℕ) : (room_seq f l').1.1 :=
-  pick_colorful_point (Finset.mem_filter.1 (room_seq f l').2).2
+instance roomSeqCoestdSimplex (l' : ℕ) :
+    CoeOut (room_seq f l').1.1 (stdSimplex ℝ (Fin n)) where
+  coe x := TTtostdSimplex x.1
 
+def room_point_seq (l' : ℕ) : (room_seq f l').1.1 := by
+  let l : PNat := ⟨l' + 1, Nat.zero_lt_succ _⟩
+  letI : Inhabited (TT n l) := TT.inhabited n l
+  letI : IndexedLOrder (Fin n) (TT n l) := TT.ILO
+  exact pick_colorful_point (Finset.mem_filter.1 (room_seq f l').2).2
 
 
 section finiteness
@@ -494,7 +505,7 @@ open Filter
 /- room_seq ∘ g1 ∘ hpkg.1.2 converge to a point in stdSimplex-/
 
 lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin n)) (C : Finset (Fin n)) (g : ℕ ↪o ℕ) (h_const : ∀ l', (room_seq f (g l')).1.2 = C) :
-  ∀ i ∉ C, Filter.Tendsto (fun l' => ((room_point_seq f (g l')) : stdSimplex ℝ (Fin n)).1 i) Filter.atTop (𝓝 0) := by
+  ∀ i ∉ C, Filter.Tendsto (fun l' => ((room_point_seq f (g l') : stdSimplex ℝ (Fin n))).1 i) Filter.atTop (𝓝 0) := by
   intro i hiC
   have h_tendsto_bound : Filter.Tendsto (fun l' => ((n : ℝ) + 1) / ((g l' : ℝ) + 1)) Filter.atTop (𝓝 0) := by
     have h_denom_tendsto : Filter.Tendsto (fun l' => (g l' : ℝ) + 1) Filter.atTop Filter.atTop := by
@@ -512,7 +523,7 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
     exact this
   apply tendsto_of_tendsto_of_tendsto_of_le_of_le (tendsto_const_nhds : Tendsto (fun _ : ℕ => (0 : ℝ)) atTop (𝓝 0)) h_tendsto_bound
   · intro l'
-    exact ((room_point_seq f (g l')) : stdSimplex ℝ (Fin n)).2.1 i
+    exact ((room_point_seq f (g l') : stdSimplex ℝ (Fin n))).2.1 i
   · intro l'
     let l_pnat : PNat := ⟨g l' + 1, Nat.succ_pos _⟩
     let rs := room_seq f (g l')
@@ -525,17 +536,18 @@ lemma dominant_coords_tend_to_zero (f : stdSimplex ℝ (Fin n) → stdSimplex �
     have hx_mem : (x : TT n l_pnat) ∈ σ := x.2
     have h_dom : TT.ILO.isDominant σ C_l := colorful_proof.1
     have h_bound := size_bound_out n l_pnat σ C_l h_dom (x : TT n l_pnat) hx_mem i hiC_l
-    simp only [TTtostdSimplex, Subtype.coe_mk]
+    change ((((x.val.val i : Fin (l_pnat + 1)) : ℕ) : ℝ) / (l_pnat : ℝ)) ≤
+      (↑n + 1) / (↑(g l') + 1)
     have h_eq : (↑l_pnat : ℝ) = ↑(g l') + 1 := by simp [l_pnat, PNat.mk_coe]
     rw [h_eq]
     rw [div_le_div_iff_of_pos_right (by positivity : (0 : ℝ) < ↑(g l') + 1)]
-    have h_bound_real : ((((x : TT n l_pnat) i : ℕ) : ℝ)) < (↑n + 1 : ℝ) := by
+    have h_bound_real : ((((x.val.val i : Fin (l_pnat + 1)) : ℕ) : ℝ)) < (↑n + 1 : ℝ) := by
       exact_mod_cast Nat.lt_succ_of_le (Int.ofNat_le.mp (Int.le_of_lt_add_one h_bound))
     exact le_of_lt h_bound_real
 
 theorem hpkg_aux:
   Nonempty {(z , h) : (stdSimplex ℝ  (Fin n)) × (ℕ → ℕ) | StrictMono h ∧ Filter.Tendsto
-    ((fun l' => (room_point_seq f (g1 f l'): stdSimplex ℝ (Fin n))) ∘ h)
+    ((fun l' => (room_point_seq f (g1 f l') : stdSimplex ℝ (Fin n))) ∘ h)
     Filter.atTop (𝓝 z) } := by
   let u := fun l' : ℕ => (room_point_seq f (g1 f l') : stdSimplex ℝ (Fin n))
   have h_compact : IsCompact (Set.univ : Set (stdSimplex ℝ (Fin n))) := isCompact_univ
@@ -617,7 +629,7 @@ theorem f_coords_ge_z_coords (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin
       let z := (hpkg f).1.1
       let C := (gpkg f).1.1
       let φ := (hpkg f).1.2
-      have convergence_to_z : Filter.Tendsto ((fun l' => (room_point_seq f (g1 f l'): stdSimplex ℝ (Fin n))) ∘ φ) Filter.atTop (𝓝 z) := by
+      have convergence_to_z : Filter.Tendsto ((fun l' => (room_point_seq f (g1 f l') : stdSimplex ℝ (Fin n))) ∘ φ) Filter.atTop (𝓝 z) := by
         exact (hpkg f).2.2
       have constant_color_set : ∀ l', (room_seq f (g1 f l')).1.2 = C := by
         exact (gpkg f).2
@@ -655,13 +667,15 @@ theorem f_coords_ge_z_coords (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin
         have h_color : (let l_pnat : PNat := ⟨(g1 f) l' + 1, by simp⟩; @Fcolor n l_pnat f chosen_point) = idx := h_spec.2
         let l_pnat : PNat := ⟨(g1 f) l' + 1, by simp⟩
         unfold Fcolor at h_color
-        have h_pick_property : ∃ h : Nonempty {i | (chosen_point : stdSimplex ℝ (Fin n)).1 i ≤ (f (chosen_point : stdSimplex ℝ (Fin n))).1 i},
+        have h_pick_property : ∃ h : Nonempty {i |
+            (TTtostdSimplex chosen_point).1 i ≤ (f (TTtostdSimplex chosen_point)).1 i},
           @Classical.choice _ h = idx := by
           rw [← h_color]
-          use stdSimplex.upidx (chosen_point : stdSimplex ℝ (Fin n)) (f (chosen_point : stdSimplex ℝ (Fin n)))
+          use stdSimplex.upidx (TTtostdSimplex chosen_point) (f (TTtostdSimplex chosen_point))
           rfl
         obtain ⟨h_nonempty, h_choice_eq⟩ := h_pick_property
-        have h_mem : idx ∈ {i | (chosen_point : stdSimplex ℝ (Fin n)).1 i ≤ (f (chosen_point : stdSimplex ℝ (Fin n))).1 i} := by
+        have h_mem : idx ∈ {i |
+            (TTtostdSimplex chosen_point).1 i ≤ (f (TTtostdSimplex chosen_point)).1 i} := by
           let choice_prop := Classical.choice h_nonempty
           have : idx = choice_prop.val := h_choice_eq.symm
           rw [this]
@@ -676,7 +690,8 @@ theorem f_coords_ge_z_coords (f : stdSimplex ℝ (Fin n) → stdSimplex ℝ (Fin
             apply Metric.dist_le_diam_of_mem
             · exact Set.Finite.isBounded (Finset.finite_toSet _)
             · exact Finset.mem_image_of_mem TTtostdSimplex (y_seq_spec (φ k)).1
-            · exact Finset.mem_image_of_mem TTtostdSimplex (pick_colorful_point ((Finset.mem_filter.1 (room_seq f (g1 f (φ k))).2).2)).2
+            · exact Finset.mem_image_of_mem TTtostdSimplex
+                (room_point_seq f (g1 f (φ k))).2
           have h_diam_tendsto : Tendsto (fun k => Metric.diam (SetLike.coe ((room_seq f (g1 f (φ k))).1.1.image TTtostdSimplex))) atTop (𝓝 0) := by
             exact tendsto_diam_to_zero f
           exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_diam_tendsto
@@ -715,7 +730,7 @@ theorem Brouwer (hf : Continuous f): ∃ x , f x = x := by
 
   have tendsto_diam_to_zero := tendsto_diam_to_zero f
 
-  have convergence_to_z : Filter.Tendsto ((fun l' => (room_point_seq f (g1 f l'): stdSimplex ℝ (Fin n))) ∘ φ) Filter.atTop (𝓝 z) :=
+  have convergence_to_z : Filter.Tendsto ((fun l' => (room_point_seq f (g1 f l') : stdSimplex ℝ (Fin n))) ∘ φ) Filter.atTop (𝓝 z) :=
     (hpkg f).2.2
 
   have constant_color_set : ∀ l', (room_seq f (g1 f l')).1.2 = C :=
@@ -723,13 +738,13 @@ theorem Brouwer (hf : Continuous f): ∃ x , f x = x := by
 
   have coords_outside_C_zero : ∀ i_1 ∉ C, z.1 i_1 = 0 := by
     intro i_1 hi_not_C
-    have tendsto_zero : Filter.Tendsto (fun l' => ((room_point_seq f (g1 f l')) : stdSimplex ℝ (Fin n)).1 i_1) Filter.atTop (𝓝 0) :=
+    have tendsto_zero : Filter.Tendsto (fun l' => ((room_point_seq f (g1 f l') : stdSimplex ℝ (Fin n))).1 i_1) Filter.atTop (𝓝 0) :=
       dominant_coords_tend_to_zero f C (g1 f) constant_color_set i_1 hi_not_C
-    have h_tendsto_coord_z : Tendsto (fun k => ((room_point_seq f (g1 f (φ k))) : stdSimplex ℝ (Fin n)).1 i_1) atTop (𝓝 (z.1 i_1)) := by
+    have h_tendsto_coord_z : Tendsto (fun k => ((room_point_seq f (g1 f (φ k)) : stdSimplex ℝ (Fin n))).1 i_1) atTop (𝓝 (z.1 i_1)) := by
       have h_continuous : Continuous (fun x : stdSimplex ℝ (Fin n) => x.1 i_1) :=
         Continuous.comp (continuous_apply i_1) continuous_subtype_val
       exact h_continuous.continuousAt.tendsto.comp convergence_to_z
-    have tendsto_zero_subseq : Tendsto (fun k => ((room_point_seq f (g1 f (φ k))) : stdSimplex ℝ (Fin n)).1 i_1) atTop (𝓝 0) :=
+    have tendsto_zero_subseq : Tendsto (fun k => ((room_point_seq f (g1 f (φ k)) : stdSimplex ℝ (Fin n))).1 i_1) atTop (𝓝 0) :=
       (dominant_coords_tend_to_zero f C (g1 f) constant_color_set i_1 hi_not_C).comp (hpkg f).2.1.tendsto_atTop
     exact tendsto_nhds_unique h_tendsto_coord_z tendsto_zero_subseq
 
