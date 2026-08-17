@@ -57,7 +57,9 @@ lemma index_split_existence (k : Fin (total_card card)) : ∃ (p : Σ i, Fin (ca
       rw [h_split, Finset.sum_union]
       · simp
       · simp
-    rwa [this] at i₀_in_S
+    change k.val < (∑ j ∈ Finset.univ.filter (· < i₀), (card j : ℕ)) + (card i₀ : ℕ)
+    rw [← this]
+    exact i₀_in_S
   have h_le : prefix_sum card i₀ ≤ k.val := by
     by_cases h_i₀_is_min : i₀ = (Finset.univ.min' Finset.univ_nonempty)
     · rw [h_i₀_is_min, prefix_sum]
