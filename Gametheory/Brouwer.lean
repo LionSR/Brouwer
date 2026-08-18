@@ -39,10 +39,9 @@ variable {n l} in
 def TTtostdSimplex (x : TT n l) : stdSimplex ℝ (Fin n) := ⟨fun i => x i / l, by
   rw [stdSimplex]
   constructor
-  · intro;simp only[Set.coe_setOf]
+  · intro
     apply div_nonneg <;> simp
-  · simp only [Set.coe_setOf];
-    rw [<-Finset.sum_div, div_eq_one_iff_eq]
+  · rw [<-Finset.sum_div, div_eq_one_iff_eq]
     · exact_mod_cast x.2
     · exact Iff.mpr Nat.cast_ne_zero (PNat.ne_zero l)
   ⟩
@@ -117,11 +116,11 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
         rw [← Finset.sum_insert (Finset.notMem_erase 0 Finset.univ)]
         rw [Finset.insert_erase (Finset.mem_univ 0)]
       rw [this]
-      simp only [M_coords, if_true]
+      simp only [M_coords, ite_true]
       have sum_eq : ∑ x ∈ Finset.univ.erase 0, (if x = 0 then M' 0 + R else M' x) = ∑ x ∈ Finset.univ.erase 0, M' x := by
         apply Finset.sum_congr rfl
         intro k hk
-        simp only [if_neg (Finset.ne_of_mem_erase hk)]
+        simp only [ite_eq_right (Finset.ne_of_mem_erase hk)]
       rw [sum_eq, add_comm (M' 0) R, add_assoc, ← h1]
       simp only [R]
       have hM'0_le_S : M' 0 ≤ S := by
@@ -157,7 +156,7 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
   obtain ⟨M, hM⟩ := h_exists_point
   have h_min_less : ∀ k ∈ C, ∃ x_min ∈ σ, ∀ x ∈ σ, x_min ≤[k] x := by
     intro k _
-    letI : LinearOrder (TT n l) := IndexedLOrder.IST k
+    let : LinearOrder (TT n l) := IndexedLOrder.IST k
     let x_min := σ.min' h2
     use x_min
     constructor
@@ -166,7 +165,7 @@ lemma size_bound_key (σ : Finset (TT n l)) (C : Finset (Fin n)) (h : TT.ILO.isD
       exact Finset.min'_le σ x hx
   have h_contradiction : ∀ k ∈ C, ∃ x_min ∈ σ, x_min <[k] M := by
     intro k hk_in_C
-    letI : LinearOrder (TT n l) := IndexedLOrder.IST k
+    let : LinearOrder (TT n l) := IndexedLOrder.IST k
     let x_min := σ.min' h2
     use x_min
     constructor
